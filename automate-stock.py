@@ -67,13 +67,8 @@ def getStatistic(historicalData):
 
     return dataSet
 
-startDate = '2016-12-13'
-buyPrice = 41.28
-buyNumber = 17
-
-if __name__=="__main__":
-    historical = getStockInfo()
-    result = getStatistic(historical)
+def ratioByMonth(historicalData):
+    result = getStatistic(historicalData)
     count = len(result)
     i = 0
     data = {}
@@ -87,7 +82,16 @@ if __name__=="__main__":
         i += 1
     print result
 
-    data['lastPrice'] = result[0]['price']
+    data['lastPrice'] = buyPrice
     data['latestPrice'] = result[-1]['price']
+    data['number'] = buyNumber
     ratio = profitAndCossRatio(data)
     print ratio
+
+startDate = '2016-12-15'
+buyPrice = 41.28
+buyNumber = 17
+
+if __name__=="__main__":
+    historical = getStockInfo()
+    ratioByMonth(historical)

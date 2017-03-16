@@ -145,8 +145,8 @@ def parseLayoutObjs(layoutObjs, pageNumber, imagesFolder, text=[]):
     for layoutObj in layoutObjs:
         if isinstance(layoutObj, LTTextBox) or isinstance(layoutObj, LTTextLine):
             # 文本
-            #textContent.append(layoutObj.get_text())
-            pageText = updatePageTextHash(pageText, layoutObj)
+            textContent.append(toByteString(layoutObj.get_text()))
+            #pageText = updatePageTextHash(pageText, layoutObj)
         elif isinstance(layoutObj, LTImage):
             # 图片,保存到指定目录,标注它在文本中的位置
             '''
@@ -161,9 +161,9 @@ def parseLayoutObjs(layoutObjs, pageNumber, imagesFolder, text=[]):
             # LTFigure对象包含了其它LT*对象
             textContent.append(parseLayoutObjs(layoutObj._objs, pageNumber, imagesFolder, textContent))
 
-    for k, v in sorted([(key,value) for (key,value) in pageText.items()]):
+    #for k, v in sorted([(key,value) for (key,value) in pageText.items()]):
         # 按照每一栏的x0,x1位置排序,按照从上到下,从左到右的顺序输出文本
-        textContent.append('\n'.join(v))
+        #textContent.append('\n'.join(v))
 
     return '\n'.join(textContent)
 
@@ -197,7 +197,7 @@ def getPages(pdfDoc, pdfPwd='', imagesFolder='/temp'):
     '''
     处理PDF文档中的每个页面
     '''
-    print '\n\n'.join(withPDF(pdfDoc, pdfPwd, _parsePages, *tuple([imagesFolder])))
+    return '\n\n'.join(withPDF(pdfDoc, pdfPwd, _parsePages, *tuple([imagesFolder])))
 
 if __name__=="__main__":
     getPages('./pdf/print.pdf')

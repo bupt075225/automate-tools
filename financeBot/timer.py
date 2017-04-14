@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 import sched
 from queryStockPrice import StockReport
 from sendEmail import email
+from visual import visualization
 
 scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -76,10 +77,21 @@ class stockTask(task):
         print "I am working in stock task"
         report = StockReport('CTRP', '2016-12-15', 41.28, 17)
         ret = report.ratioByMonth()
+        if isinstance(ret['detail'], list):
+            visual = visualization(ret['detail'])
+            data = visual.generateTable()
+            print data
+            imageName = visual.generateFigure()
+        else:
+            print "Data not found"
+            data = "<p>%s</p>" % (str(ret))
+            imageName = ''
+
         emailContent = {}
         emailContent['toAddr'] = 'nonprivatemail@163.com'
         emailContent['subject'] = '月度财务报告'
-        emailContent['content'] = str(ret)
+        emailContent['content'] = data
+        emailContent['imageName'] = imageName 
         mail = email()
         msg = mail.writeEmail(**emailContent)
         mail.sendEmail(emailContent['toAddr'], msg)

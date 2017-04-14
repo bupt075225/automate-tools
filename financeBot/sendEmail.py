@@ -4,7 +4,9 @@
 from email import encoders
 from email.header import Header
 from email.utils import parseaddr, formataddr
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 import smtplib
 
 class email(object):
@@ -18,11 +20,29 @@ class email(object):
         return formataddr((Header(name, 'utf-8').encode(), addr))
 
     def writeEmail(self, **kw):
-        msg = MIMEText(kw['content'], 'plain', 'utf-8')
-        msg['From'] = self._format_addr('助理 <%s>' % self.fromAddr)
-        msg['To'] = self._format_addr('老板 <%s>' % kw['toAddr'])
-        msg['Subject'] = Header(kw['subject'], 'utf-8').encode()
-        return msg
+        msgRoot = MIMEMultipart('related')
+        msgRoot['From'] = self._format_addr('助理 <%s>' % self.fromAddr)
+        msgRoot['To'] = self._format_addr('老板 <%s>' % kw['toAddr'])
+        msgRoot['Subject'] = Header(kw['subject'], 'utf-8').encode()
+
+        # 封装普通文本和HTML两个版本消息体在'alternative'部分,因为
+        # 有的邮件代理服务器不支持HTML或客户端设置了只接收普通文本
+        msgAlternative = MIMEMultipart('alternative')
+        msgRoot.attach(msgAlternative)
+
+        if kw['imageName'] != '':
+            with open(kw['imageName'], 'rb') as fp:
+                msgImage = MIMEImage(fp.read())
+
+            kw['content'] = kw['content'] + '<br><img src="cid:image1"></br>'
+            msgImage.add_header('Content-ID', '<image1>')
+            msgRoot.attach(msgImage)
+
+        # 邮件内容是包含一张图片的HTML
+        msgText = MIMEText(kw['content'], 'html')
+        msgAlternative.attach(msgText)
+
+        return msgRoot
 
     def sendEmail(self, toAddr, msg):
         server = smtplib.SMTP_SSL(self.smtpServer, 465)

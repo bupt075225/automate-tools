@@ -9,11 +9,13 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import smtplib
 
+import private
+
 class email(object):
     def __init__(self):
         self.fromAddr = "1335689830@qq.com"
         self.smtpServer = "smtp.qq.com"
-        self.password = ""
+        self.password = private.configs['mailAuth']
 
     def _format_addr(self, s):
         name, addr = parseaddr(s)

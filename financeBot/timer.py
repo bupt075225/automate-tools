@@ -7,11 +7,15 @@
 
 import datetime
 import time
+import sys
 from dateutil.relativedelta import relativedelta
 import sched
 from queryStockPrice import StockReport
 from sendEmail import email
 from visual import visualization
+
+import private
+
 
 scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -31,9 +35,10 @@ class timer(object):
 
 class task(object):
     '''
-    任务基类,所有定制任务都是它的子类似,提供重新调试任务的
+    任务基类,所有定制任务都是它的子类,提供重新调度任务的
     方法供所有子任务使用,还提供计算当前时该到用户设定时间的
-    间隔,以秒为单位
+    间隔的方法,以秒为单位
+    提供周期为天或月的定时任务
     '''
     def __init__(self, datetime="25 12:15", hour=None, args=()):
         self.arguments = args
@@ -46,6 +51,9 @@ class task(object):
 
     def calculateTimeDelta(self):
         if self.hour != None:
+            '''
+            每天定时执行的任务时间间隔
+            '''
             now = datetime.datetime.now()
             print "Now time: %s" % now
             timeStr = str(now.year) + '-' + str(now.month) + '-' + str(now.day) + ' ' + self.hour
@@ -55,6 +63,9 @@ class task(object):
                 future = future + relativedelta(days=+1)
                 print "Lost today and next time is %s" % future
         else:
+            '''
+            每月定时执行的任务时间间隔
+            '''
             now = datetime.datetime.now()
             print "Now time: %s" % now
             timeStr = str(now.year) + '-' + str(now.month) + '-' + self.datetime
@@ -68,6 +79,9 @@ class task(object):
         return delta.total_seconds()
 
 class stockTask(task):
+    '''
+    定时运行的股票信息报告任务
+    '''
     def __init__(self, datetime="25 12:15", hour=None, args=()):
         super(stockTask, self).__init__(datetime, hour, args)
 
@@ -75,29 +89,35 @@ class stockTask(task):
         delayTime = self.calculateTimeDelta()
         self.reschedule(self.runStockTask, self.arguments, delayTime)
         print "I am working in stock task"
-        report = StockReport('CTRP', '2016-12-15', 41.28, 17)
-        ret = report.ratioByMonth()
-        if isinstance(ret['detail'], list):
-            visual = visualization(ret['detail'])
-            data = visual.generateTable()
-            print data
-            imageName = visual.generateFigure()
-        else:
-            print "Data not found"
-            data = "<p>%s</p>" % (str(ret))
-            imageName = ''
+        for stock in private.configs['stocks']:
+            report = StockReport(stock['symbol'], stock['date'], 
+                                 stock['buyPrice'], stock['count'])
+            ret = report.ratioByMonth()
+            if isinstance(ret['detail'], list):
+                visual = visualization(ret['detail'])
+                data = visual.generateTable()
+                print data
+                imageName = visual.generateFigure()
+            else:
+                '''
+                获取财务源数据异常
+                '''
+                print "Data not found"
+                data = "<p>%s</p>" % (str(ret))
+                imageName = ''
+                sys.exit(1)
 
-        emailContent = {}
-        emailContent['toAddr'] = 'nonprivatemail@163.com'
-        emailContent['subject'] = '月度财务报告'
-        emailContent['content'] = data
-        emailContent['imageName'] = imageName 
-        mail = email()
-        msg = mail.writeEmail(**emailContent)
-        mail.sendEmail(emailContent['toAddr'], msg)
+            emailContent = {}
+            emailContent['toAddr'] = stock['email']
+            emailContent['subject'] = '月度财务报告'
+            emailContent['content'] = data
+            emailContent['imageName'] = imageName 
+            mail = email()
+            msg = mail.writeEmail(**emailContent)
+            mail.sendEmail(emailContent['toAddr'], msg)
 
 if __name__=="__main__":
-    testTask = stockTask(datetime="28 12:10")
+    testTask = stockTask(datetime="15 22:22")
     testTimer = timer(testTask.runStockTask, delay=testTask.timeDelta)
     testTimer.trigger()
 

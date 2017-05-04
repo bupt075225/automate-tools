@@ -32,8 +32,8 @@ class email(object):
         msgAlternative = MIMEMultipart('alternative')
         msgRoot.attach(msgAlternative)
 
-        if kw['imageName'] != '':
-            with open(kw['imageName'], 'rb') as fp:
+        if kw['image_name'] != '':
+            with open(kw['image_name'], 'rb') as fp:
                 msgImage = MIMEImage(fp.read())
 
             kw['content'] = kw['content'] + '<br><img src="cid:image1"></br>'

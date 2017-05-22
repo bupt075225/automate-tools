@@ -8,7 +8,16 @@
 import scrapy
 
 
-class ScratchwebItem(scrapy.Item):
+class airbnb_listing(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    accommodates = scrapy.Field()
+    property_type = scrapy.Field()
+    room_type = scrapy.Field()
+    min_stay = scrapy.Field()
+    reviews = scrapy.Field()
+    rank = scrapy.Field()
+    host_since = scrapy.Field()
+    url = scrapy.Field()
+
+

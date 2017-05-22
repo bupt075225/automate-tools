@@ -15,7 +15,7 @@ SPIDER_MODULES = ['scratchWeb.spiders']
 NEWSPIDER_MODULE = 'scratchWeb.spiders'
 
 # Add the Splash server address
-SPLASH_URL = 'http://localhost:8050'
+SPLASH_URL = 'http://localhost:8050/'
 # Set a custom DUPEFILTER_CLASS
 DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
 HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
@@ -88,6 +88,10 @@ DOWNLOADER_MIDDLEWARES = {
 #AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 # Enable showing throttling stats for every response received:
 #AUTOTHROTTLE_DEBUG = False
+
+# Enable and configure feed exports at 2017-05-21
+FEED_FORMAT = 'csv'
+FEED_URI = './result.csv'
 
 # Enable and configure HTTP caching (disabled by default)
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings

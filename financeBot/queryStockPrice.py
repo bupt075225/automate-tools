@@ -5,17 +5,19 @@ from __future__ import division
 import sys
 import time
 import datetime
-from yahoo_finance import Share
+#from yahoo_finance import Share
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
+
+from data_source import IntrinioQuery
 
 class StockReport(object):
     '''
     股票盈亏报告
     '''
-    def __init__(self, symbol, buyDate, price, count):
+    def __init__(self, symbol, buy_date, price, count):
         self.symbol = symbol
-        self.buyDate = buyDate
+        self.buy_date = buy_date
         self.buyPrice = price
         self.count = count
         self.historicalData = self._getStockInfo(self.symbol)
@@ -32,13 +34,18 @@ class StockReport(object):
         percent = ((latestAsset - lastAsset) / lastAsset) * 100
         return (str(round(percent, 2)) + '%')
 
-    def _getStockInfo(self, stockSymbol):
+    def _getStockInfo(self, symbol):
         '''
         从yahoo财经获取股票历史价格
-        '''
         curDate = time.strftime("%Y-%m-%d" ,time.localtime())
         dataSet = Share(stockSymbol)
-        return dataSet.get_historical(self.buyDate, curDate)
+        return dataSet.get_historical(self.buy_date, curDate)
+        '''
+
+        # 从intrinio获取股票历史价格
+        cur_date = time.strftime("%Y-%m-%d" ,time.localtime())
+        query = IntrinioQuery(symbol, self.buy_date, cur_date)
+        return query.execute()
 
     def _getTimePoints(self, start, end=time.strftime("%Y-%m-%d" ,time.localtime())):
         '''
@@ -60,23 +67,23 @@ class StockReport(object):
         '''
         每月在买入日期查询一次股价,作为当月统计数据
         '''
-        dataSet = self._getTimePoints(self.buyDate)
+        dataSet = self._getTimePoints(self.buy_date)
 
         historicalDict = {}
         for item in self.historicalData:
-            historicalDict[item['Date']] = item
+            historicalDict[item['date']] = item
 
         for data in dataSet:
             while 1:
-                # 统计日期是休市日往回查,找到休市前的第一个交易日
+                # 统计日期是休市日往后查,找到休市后的第一个交易日
                 if not historicalDict.has_key(data['date']):
                     splitDate = data['date'].split('-')
-                    nextDay = datetime.date(int(splitDate[0]),int(splitDate[1]),int(splitDate[2])) + relativedelta(days=-1)
-                    data['date'] = time.strftime('%Y-%m-%d', nextDay.timetuple())
+                    next_day = datetime.date(int(splitDate[0]),int(splitDate[1]),int(splitDate[2])) + relativedelta(days=+1)
+                    data['date'] = time.strftime('%Y-%m-%d', next_day.timetuple())
                 else:
                     break
 
-            data['price'] = historicalDict[data['date']]['Close']
+            data['price'] = historicalDict[data['date']]['close']
         return dataSet
 
     def ratioByMonth(self):
@@ -104,7 +111,8 @@ class StockReport(object):
             ratio = self._profitRatio(data)
             print 'Latest date %s ratio:' % result[-1]['date']
             print ratio
-            report['growthRate'] = ratio
+            report['growth_rate'] = ratio
+            report['symbol'] = self.symbol
         else:
             report['info'] = 'There is only the first month statistic data found'
 

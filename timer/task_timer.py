@@ -97,7 +97,6 @@ class StockTask(task):
             if isinstance(ret['detail'], list):
                 visual = visualization(ret['detail'])
                 data = visual.generateTable()
-                print data
                 image_name = visual.generateFigure()
             else:
                 '''
@@ -108,10 +107,11 @@ class StockTask(task):
                 image_name = ''
                 sys.exit(1)
 
+            abstract = '<p>%s 增长率 %s</p>' % (ret['symbol'], ret['growth_rate'])
             email_content = {}
             email_content['toAddr'] = stock['email']
             email_content['subject'] = '月度财务报告'
-            email_content['content'] = data
+            email_content['content'] = abstract + data.encode('utf-8')
             email_content['image_name'] = image_name 
             mail = email()
             msg = mail.writeEmail(**email_content)
@@ -132,8 +132,8 @@ class RestartWebSiteTask(task):
 
 
 if __name__=="__main__":
-    restart_web_task = RestartWebSiteTask(hour="22:33")
-    send_report_task = StockTask(datetime="4 22:32")
+    restart_web_task = RestartWebSiteTask(hour="2:30")
+    send_report_task = StockTask(datetime="4 11:16")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},
         {'delay':send_report_task.timeDelta, 'action':send_report_task.run_stock_task, 'args':tuple()},

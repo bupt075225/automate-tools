@@ -29,8 +29,8 @@ class email(object):
 
         # 封装普通文本和HTML两个版本消息体在'alternative'部分,因为
         # 有的邮件代理服务器不支持HTML或客户端设置了只接收普通文本
-        msgAlternative = MIMEMultipart('alternative')
-        msgRoot.attach(msgAlternative)
+        body = MIMEMultipart('alternative')
+        msgRoot.attach(body)
 
         if kw['image_name'] != '':
             with open(kw['image_name'], 'rb') as fp:
@@ -41,8 +41,8 @@ class email(object):
             msgRoot.attach(msgImage)
 
         # 邮件内容是包含一张图片的HTML
-        msgText = MIMEText(kw['content'], 'html')
-        msgAlternative.attach(msgText)
+        table = MIMEText(kw['content'], 'html')
+        body.attach(table)
 
         return msgRoot
 

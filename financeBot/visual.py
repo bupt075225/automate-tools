@@ -44,4 +44,7 @@ class visualization(object):
 
 if __name__=='__main__':
     vis = visualization([{'date': '2016-12-15', 'price': '41.330002'}, {'date': '2017-01-13', 'price': '43.529999', 'ratio': '5.32%'}, {'date': '2017-02-15', 'price': '45.459999', 'ratio': '4.43%'}, {'date': '2017-03-15', 'price': '48.66', 'ratio': '7.04%'}])
-    vis.generateFigure()
+    #vis.generateFigure()
+    ret = vis.generateTable()
+    print ret
+    print type(ret)

@@ -17,4 +17,8 @@ configs = {
             'email':'nonprivatemail@163.com'
         },
     ]
+    'intrinio_api_auth':{
+        'username':'xxxx',
+        'password':'xxxx'
+    }
 }

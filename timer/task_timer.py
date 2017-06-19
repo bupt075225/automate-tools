@@ -133,7 +133,7 @@ class RestartWebSiteTask(task):
 
 if __name__=="__main__":
     restart_web_task = RestartWebSiteTask(hour="2:30")
-    send_report_task = StockTask(datetime="4 11:16")
+    send_report_task = StockTask(datetime="28 12:15")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},
         {'delay':send_report_task.timeDelta, 'action':send_report_task.run_stock_task, 'args':tuple()},

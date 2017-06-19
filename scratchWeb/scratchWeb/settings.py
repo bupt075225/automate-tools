@@ -72,9 +72,15 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'scratchWeb.pipelines.ScratchwebPipeline': 300,
-#}
+ITEM_PIPELINES = {
+#    'scratchWeb.pipelines.MongoDBPipeline': 300,
+}
+
+# Enable and configure mongodb at 2017-06-15
+MONGODB_HOST = 'localhost'
+MONGODB_PORT = 27017
+MONGODB_DATABASE = 'nasdaq'
+MONGODB_COLLECTION = 'historical_price'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -91,6 +97,7 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Enable and configure feed exports at 2017-05-21
 FEED_FORMAT = 'csv'
+# This setting is required for enabling the feed exports
 FEED_URI = './result.csv'
 
 # Enable and configure HTTP caching (disabled by default)

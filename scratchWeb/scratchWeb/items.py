@@ -51,6 +51,21 @@ class LagouJob(scrapy.Item):
     company_size = scrapy.Field()
     education = scrapy.Field()
 
-class LianjiaErshoufang(scrapy.Item):
+class LianjiaErShouFang(scrapy.Item):
     title = scrapy.Field()
     price = scrapy.Field()
+    unit_price = scrapy.Field()
+    house_style = scrapy.Field()
+    house_area = scrapy.Field()
+    inline_area = scrapy.Field()
+    building_time = scrapy.Field()
+    decoration = scrapy.Field()
+    property_years = scrapy.Field()
+    floor = scrapy.Field()
+    register_date = scrapy.Field()
+    view_count = scrapy.Field()
+    neighborhoods = scrapy.Field()
+
+class LianjiaErShouFangLoader(ItemLoader):
+    default_output_processor = Identity()
+    neighborhoods_out = Join()

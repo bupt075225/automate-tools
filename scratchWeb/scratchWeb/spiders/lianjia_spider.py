@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 import scrapy
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
@@ -9,7 +11,7 @@ from scratchWeb.items import LianjiaErShouFang, LianjiaErShouFangLoader
 class LianjiaSpiderSpider(CrawlSpider):
     name = "lianjia_spider"
     allowed_domains = ["lianjia.com"]
-    start_urls = ['http://cd.lianjia.com/ershoufang']
+    start_urls = ['http://cd.lianjia.com/ershoufang/pg4']
 
     # 从二手房列表中提取房源详情页面URL链接
     ershoufang_link_extractor = LinkExtractor(allow="https://cd.lianjia.com/ershoufang/" + "\d+\.html", 
@@ -19,15 +21,29 @@ class LianjiaSpiderSpider(CrawlSpider):
                   follow=True),
             )
 
+    def parse_start_url(self, response):
+        '''
+        提取二手房搜索结果的下一页链接
+        '''
+        page_data = response.xpath(
+            "//div[@class='page-box house-lst-page-box']/@page-data").extract()
+        match = re.findall(":(\d+)", page_data[0])
+        total_page = int(match[0])
+        cur_page = int(match[1])
+        next_page = cur_page + 1
+        if next_page <= total_page:
+            next_page_url = self.start_urls[0] + "/pg" + str(next_page)
+            # 不设置callback参数,scrapy会使用Spider类的parse方法作为响应回调,
+            # CrawlSpider子类的parse方法会调用parse_start_url
+            return scrapy.Request(next_page_url)
+        else:
+            return []
+
     def parse_ershoufang(self, response):
         '''
-        filename = 'ershoufang.html'
-        with open(filename, 'wb') as fd:
-            fd.write(response.body)
+        从二手房详情页面提取信息
         '''
 
-        # 创建Item对象
-        ershoufang_item = LianjiaErShouFang()
         item_loader = LianjiaErShouFangLoader(item=LianjiaErShouFang(),
             response=response)
 

@@ -11,7 +11,7 @@ from scratchWeb.items import LianjiaErShouFang, LianjiaErShouFangLoader
 class LianjiaSpiderSpider(CrawlSpider):
     name = "lianjia_spider"
     allowed_domains = ["lianjia.com"]
-    start_urls = ['http://cd.lianjia.com/ershoufang/pg4']
+    start_urls = ['http://cd.lianjia.com/ershoufang']
 
     # 从二手房列表中提取房源详情页面URL链接
     ershoufang_link_extractor = LinkExtractor(allow="https://cd.lianjia.com/ershoufang/" + "\d+\.html", 

@@ -5,11 +5,11 @@ from __future__ import division
 import sys
 import time
 import datetime
-#from yahoo_finance import Share
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 
 from data_source import IntrinioQuery
+from db import Share
 
 class StockReport(object):
     '''
@@ -35,17 +35,17 @@ class StockReport(object):
         return (str(round(percent, 2)) + '%')
 
     def _getStockInfo(self, symbol):
-        '''
-        从yahoo财经获取股票历史价格
-        curDate = time.strftime("%Y-%m-%d" ,time.localtime())
-        dataSet = Share(stockSymbol)
-        return dataSet.get_historical(self.buy_date, curDate)
-        '''
+        #从本地数据库获取股票历史价格
+        cur_date = time.strftime("%Y-%m-%d" ,time.localtime())
+        data_set = Share(symbol)
+        return data_set.get_historical(self.buy_date, cur_date)
 
+        '''
         # 从intrinio获取股票历史价格
         cur_date = time.strftime("%Y-%m-%d" ,time.localtime())
         query = IntrinioQuery(symbol, self.buy_date, cur_date)
         return query.execute()
+        '''
 
     def _getTimePoints(self, start, end=time.strftime("%Y-%m-%d" ,time.localtime())):
         '''
@@ -73,6 +73,9 @@ class StockReport(object):
         for item in self.historicalData:
             historicalDict[item['date']] = item
 
+        print self.historicalData
+        print historicalDict
+        print dataSet
         for data in dataSet:
             while 1:
                 # 统计日期是休市日往后查,找到休市后的第一个交易日

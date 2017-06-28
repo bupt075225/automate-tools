@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import requests
+import json
 import private
 
 class IntrinioQuery(object):
@@ -28,9 +29,37 @@ class IntrinioQuery(object):
         password = private.configs["intrinio_api_auth"]["password"]
         response = requests.get(self.request_url, params=payload, 
                                 auth=(username, password))
-        return response.json()["data"]
+        #return response.json()["data"]
+        return response.json()
+
+class AlphavantageQuery(object):
+    '''
+    从https://www.alphavantage.co提供的数据源查询股票历史报价
+    查询过去20年每个交易日,或最近100个交易日的历史报价,默认查
+    过去20年的报价
+    '''
+    def __init__(self, symbol, compact=False):
+        self.symbol = symbol.upper()
+        # compact属性为True就只查最近100个交易日的报价
+        self.compact = compact
+        self.url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY'
+
+    def execute(self):
+        api_key = private.configs['alphavantage_api_key']['api_key']
+        if self.compact:
+            url = self.url + "&symbol=" + self.symbol + "&apikey=" + api_key
+        else:
+            url = self.url + "&outputsize=full&symbol=" + self.symbol + "&apikey=" + api_key
+
+        try:
+            response = requests.get(url)
+        except Exception:
+            raise
+
+        return response.json()
 
 if __name__=="__main__":
-    q = IntrinioQuery("CTRP", "2016-12-12", "2017-05-12")
+    #q = IntrinioQuery("CTRP", "2016-12-12", "2017-05-12")
+    q = AlphavantageQuery(symbol="CTRP")
     ret = q.execute()
     print ret

@@ -3,6 +3,8 @@
 import re
 import datetime
 
+from sqlalchemy.sql import exists
+
 from orm import DBSession
 from orm import HistoricalStockPrices
 
@@ -13,11 +15,11 @@ class Share(object):
         self.symbol = symbol.upper()
         self.exchange= "nasdaq"
 
-    def _get_raw_historical_prices(self):
+    def _get_raw_historical_prices(self, full=False):
         '''
         从数据源获取历史股价
         '''
-        q = AlphavantageQuery(symbol=self.symbol)
+        q = AlphavantageQuery(symbol=self.symbol, full=full)
         raw_data = q.execute()
         return raw_data
 
@@ -46,15 +48,30 @@ class Share(object):
 
         return prices
 
-    def update_db(self):
-        raw_data = self._get_raw_historical_prices()
+    def _update_db(self, full=False):
+        '''
+        全量更新和增量更新两种方式,默认增量更新
+        '''
+        if not full:
+            raw_data = self._get_raw_historical_prices()
+        else:
+            raw_data = self._get_raw_historical_prices(full)
+
         historical_prices = self._cleanse_raw_data(raw_data)
         session = DBSession()
-        session.add_all(historical_prices)
+        for price in historical_prices:
+            exist = session.query(
+                exists().where(HistoricalStockPrices.date==price.date)
+                .where(HistoricalStockPrices.symbol==price.symbol)).scalar()
+
+            if not exist:
+                session.add(price)
+
         session.commit()
         session.close()
 
-    def get_historical(self, start_date, end_date):
+    def get_historical(self, start_date, end_date, full=False):
+        self._update_db(full=full)
         session = DBSession()
         prices = session.query(HistoricalStockPrices).filter(
             HistoricalStockPrices.symbol==self.symbol).filter(

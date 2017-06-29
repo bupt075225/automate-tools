@@ -38,15 +38,15 @@ class AlphavantageQuery(object):
     查询过去20年每个交易日,或最近100个交易日的历史报价,默认查
     过去20年的报价
     '''
-    def __init__(self, symbol, compact=False):
+    def __init__(self, symbol, full=False):
         self.symbol = symbol.upper()
-        # compact属性为True就只查最近100个交易日的报价
-        self.compact = compact
+        # full属性为True就查过去20年所有数据,否则只查最近100个交易日的报价
+        self.full = full
         self.url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY'
 
     def execute(self):
         api_key = private.configs['alphavantage_api_key']['api_key']
-        if self.compact:
+        if not self.full:
             url = self.url + "&symbol=" + self.symbol + "&apikey=" + api_key
         else:
             url = self.url + "&outputsize=full&symbol=" + self.symbol + "&apikey=" + api_key

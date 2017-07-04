@@ -2,7 +2,7 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String, Date, Float
 from sqlalchemy.orm import sessionmaker
 
 import private
@@ -29,6 +29,22 @@ class HistoricalStockPrices(Base):
     def __repr__(self):
         return "<Stock quote(symbol='%s',date='%s',close='%s')>" % (
             self.symbol, self.date, self.close)
+
+
+class HistoricalBtcPrices(Base):
+    # 表名
+    __tablename__ = "historical_btc_prices"
+    __table_args__ = {"mysql_charset":"utf8","mysql_engine":"InnoDB"}
+
+    # 表结构
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False)
+    close = Column(Float, nullable=False)
+
+    def __repr__(self):
+        return "<BTC price(date='%s',close='%s')>" % (
+            self.date, self.close)
+
 
 # 初始化数据库连接
 engine = create_engine("mysql+mysqlconnector://root:%s@localhost:3306"

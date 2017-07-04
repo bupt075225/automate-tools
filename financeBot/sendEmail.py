@@ -50,5 +50,5 @@ class email(object):
         server = smtplib.SMTP_SSL(self.smtpServer, 465)
         server.set_debuglevel(1)
         server.login(self.fromAddr, self.password)
-        server.sendmail(self.fromAddr, [toAddr], msg.as_string())
+        server.sendmail(self.fromAddr, toAddr, msg.as_string())
         server.quit()

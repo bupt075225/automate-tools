@@ -13,9 +13,9 @@ import sys
 import subprocess
 
 sys.path.append('/home/data/git/automate-tools/financeBot')
-from queryStockPrice import StockReport
+from investment_report import StockReport
 from sendEmail import email
-from visual import visualization
+from visual import InvestmentVisual
 import private
 
 
@@ -90,32 +90,35 @@ class StockTask(task):
         delay_time = self.calculate_time_delta()
         self.reschedule(self.run_stock_task, self.arguments, delay_time)
         print "I am working in stock task"
+        reports = []
+        # 生成每支股票的报告内容
         for stock in private.configs['stocks']:
             report = StockReport(stock['symbol'], stock['date'], 
                                  stock['buyPrice'], stock['count'])
-            ret = report.ratioByMonth()
-            if isinstance(ret['detail'], list):
-                visual = visualization(ret['detail'])
-                data = visual.generateTable()
-                image_name = visual.generateFigure()
-            else:
-                '''
-                获取财务源数据异常
-                '''
-                print "Data not found"
-                data = "<p>%s</p>" % (str(ret))
-                image_name = ''
-                sys.exit(1)
+            ret = report.ratio_by_month()
+            reports.append(ret)
 
-            abstract = '<p>%s 增长率 %s</p>' % (ret['symbol'], ret['growth_rate'])
-            email_content = {}
-            email_content['toAddr'] = stock['email']
-            email_content['subject'] = '月度财务报告'
-            email_content['content'] = abstract + data.encode('utf-8')
-            email_content['image_name'] = image_name 
-            mail = email()
-            msg = mail.writeEmail(**email_content)
-            mail.sendEmail(email_content['toAddr'], msg)
+        abstract = ""
+        data_detail = []
+        # 报告转为邮件内容
+        for ret in reports:
+            assert isinstance(ret['detail'], list)
+            abstract += '<p>%s total growth rate: %s</p>' % (ret['symbol'], ret['growth_rate'])
+            data_detail.append(ret["detail"])
+
+        v = InvestmentVisual(data_detail)
+        tables = '<p>%s</p>' % (v.draw_table())
+        print ">>>>>>now to draw"
+        image_name = v.draw_figure()
+
+        email_content = {}
+        email_content['toAddr'] = private.configs['notify_email']
+        email_content['subject'] = '投资报告'
+        email_content['content'] = abstract.encode('utf-8') + tables.encode('utf-8')
+        email_content['image_name'] = image_name 
+        mail = email()
+        msg = mail.writeEmail(**email_content)
+        mail.sendEmail(email_content['toAddr'], msg)
 
 class RestartWebSiteTask(task):
     '''
@@ -133,7 +136,7 @@ class RestartWebSiteTask(task):
 
 if __name__=="__main__":
     restart_web_task = RestartWebSiteTask(hour="2:30")
-    send_report_task = StockTask(datetime="28 12:10")
+    send_report_task = StockTask(datetime="5 6:49")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},
         {'delay':send_report_task.timeDelta, 'action':send_report_task.run_stock_task, 'args':tuple()},

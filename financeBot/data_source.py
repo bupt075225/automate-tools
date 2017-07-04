@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
 import requests
@@ -32,7 +31,7 @@ class IntrinioQuery(object):
         #return response.json()["data"]
         return response.json()
 
-class AlphavantageQuery(object):
+class AlphavantageDataSource(object):
     '''
     从https://www.alphavantage.co提供的数据源查询股票历史报价
     查询过去20年每个交易日,或最近100个交易日的历史报价,默认查
@@ -51,15 +50,39 @@ class AlphavantageQuery(object):
         else:
             url = self.url + "&outputsize=full&symbol=" + self.symbol + "&apikey=" + api_key
 
-        try:
-            response = requests.get(url)
-        except Exception:
-            raise
+        response = requests.get(url)
+        if response.status_code != 200:
+            print "Get data failed from %s" % url
+            print response.text
+            raise ValueError
 
         return response.json()
 
-if __name__=="__main__":
-    #q = IntrinioQuery("CTRP", "2016-12-12", "2017-05-12")
-    q = AlphavantageQuery(symbol="CTRP")
-    ret = q.execute()
-    print ret
+class CoindeskDataSource(object):
+    '''
+    从http://www.coindesk.com的API获取BTC数据
+    '''
+    def __init__(self):
+        self.historical_btc_url = "http://api.coindesk.com/v1/bpi/historical/close.json"
+        self.realtime_btc_url = "http://api.coindesk.com/v1/bpi/currentprice/CNY.json"
+
+    def get_historical_btc(self, start, end):
+        url = "%s?start=%s&end=%s" % (self.historical_btc_url,start,end)
+        response = requests.get(url)
+        if response.status_code != 200:
+            print "Get data failed from %s" % url
+            print response.text
+            raise ValueError
+
+        data = response.json()
+        return data["bpi"]
+
+    def get_realtime_btc(self):
+        response = requests.get(self.realtime_btc_url)
+        if response.status_code != 200:
+            print "Get data failed from data source"
+            raise ValueError
+
+        data = response.json()
+        return data["bpi"]["USD"]["rate_float"]
+        

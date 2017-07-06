@@ -32,7 +32,6 @@ class Share(object):
         '''
         data = {}
         prices = []
-        print raw_data
         daily_quote = raw_data["Time Series (Daily)"]
         for k,v in daily_quote.iteritems():
             v_dict = {}

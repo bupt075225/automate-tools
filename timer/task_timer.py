@@ -5,6 +5,7 @@
 定时执行任务的定时触发模块
 '''
 
+import os
 import datetime
 import time
 from dateutil.relativedelta import relativedelta
@@ -93,8 +94,7 @@ class StockTask(task):
         reports = []
         # 生成每支股票的报告内容
         for stock in private.configs['stocks']:
-            report = StockReport(stock['symbol'], stock['date'], 
-                                 stock['buyPrice'], stock['count'])
+            report = StockReport(stock['symbol'], stock['buy_records']) 
             ret = report.ratio_by_month()
             reports.append(ret)
 
@@ -103,19 +103,22 @@ class StockTask(task):
         # 报告转为邮件内容
         for ret in reports:
             assert isinstance(ret['detail'], list)
-            abstract += '<p>%s total growth rate: %s</p>' % (ret['symbol'], ret['growth_rate'])
+            abstract += '<p>%s total growth rate: %s</p>' % (ret['symbol'], 
+                ret['detail'][-1]['growth_rate_monthly'])
             data_detail.append(ret["detail"])
 
+        print ">>>>>>>>>>>>panic"
         v = InvestmentVisual(data_detail)
         tables = '<p>%s</p>' % (v.draw_table())
         print ">>>>>>now to draw"
         image_name = v.draw_figure()
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
 
         email_content = {}
         email_content['toAddr'] = private.configs['notify_email']
         email_content['subject'] = '投资报告'
         email_content['content'] = abstract.encode('utf-8') + tables.encode('utf-8')
-        email_content['image_name'] = image_name 
+        email_content['image_name'] = "%s/%s" % (cur_dir,image_name) 
         mail = email()
         msg = mail.writeEmail(**email_content)
         mail.sendEmail(email_content['toAddr'], msg)
@@ -136,7 +139,7 @@ class RestartWebSiteTask(task):
 
 if __name__=="__main__":
     restart_web_task = RestartWebSiteTask(hour="2:30")
-    send_report_task = StockTask(datetime="5 6:49")
+    send_report_task = StockTask(datetime="5 7:19")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},
         {'delay':send_report_task.timeDelta, 'action':send_report_task.run_stock_task, 'args':tuple()},

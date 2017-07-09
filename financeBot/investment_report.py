@@ -14,33 +14,31 @@ class StockReport(object):
     '''
     股票盈亏报告
     '''
-    def __init__(self, symbol, buy_date, price, count):
+    def __init__(self, symbol, buy_records):
         self.symbol = symbol
-        self.buy_date = buy_date
-        self.buy_price = price
-        self.count = count
+        self.buy_records = buy_records
 
     def _profit_ratio(self, data):
         '''
         计算每月收益率
         '''
-        lastAsset = float(data['lastPrice']) * data['number']
-        latestAsset = float(data['latestPrice']) * data['number']
-        lastAsset = round(lastAsset,2)
-        latestAsset = round(latestAsset,2)
+        init_asset = data['init_asset']
+        latest_asset = round(float(data['latestPrice']) * data['number'],4)
 
-        percent = ((latestAsset - lastAsset) / lastAsset) * 100
-        return (str(round(percent, 2)) + '%')
+        ratio = round((latest_asset - init_asset) / init_asset, 4)
+        return ratio
 
-    def _get_stock_data(self, symbol):
+    def _get_stock_data(self, symbol, first_buy_date):
         #从本地数据库获取股票历史价格
         cur_date = time.strftime("%Y-%m-%d" ,time.localtime())
         if symbol=="BTC":
             coin = CryptoCurrency()
-            return coin.get_historical_btc(self.buy_date, cur_date)
-        else:
+            return coin.get_historical_btc(first_buy_date, cur_date)
+        elif symbol=="CTRP":
             share = Share(symbol)
-            return share.get_historical(self.buy_date, cur_date)
+            return share.get_historical(first_buy_date, cur_date)
+        else:
+            raise ValueError("Unknow asset symbol")
 
     def _get_time_points(self, start, end=time.strftime("%Y-%m-%d" ,time.localtime())):
         '''
@@ -58,13 +56,13 @@ class StockReport(object):
 
         return timeSet
         
-    def _get_statistic(self):
+    def _get_statistic(self, first_buy_date):
         '''
         每月在买入日期查询一次股价,作为当月统计数据
         '''
-        data_set = self._get_time_points(self.buy_date)
+        data_set = self._get_time_points(first_buy_date)
 
-        historical_data = self._get_stock_data(self.symbol)
+        historical_data = self._get_stock_data(self.symbol, first_buy_date)
         historicalDict = {}
         for item in historical_data:
             historicalDict[item['date']] = item
@@ -82,37 +80,38 @@ class StockReport(object):
             data['price'] = historicalDict[data['date']]['close']
         return data_set
 
+    def _get_init_asset(self, buy_records):
+        '''
+        计算累计投入的现金
+        '''
+        total_cash = 0
+        amount = 0
+
+        for record in buy_records:
+            total_cash += record["buy_price"] * record["amount"]
+            amount += record["amount"]
+
+        return total_cash, amount
+
     def ratio_by_month(self):
         report = {}
-        statistic_values = self._get_statistic()
+        statistic_values = self._get_statistic(self.buy_records[0]["date"])
         count = len(statistic_values)
+
+        total_cash, amount = self._get_init_asset(self.buy_records)
         i = 0
         data = {}
-        statistic_values[0]['symbol'] = self.symbol
-        statistic_values[0]['growth_rate'] = 0
-        while i < (count - 1):
-            j = i + 1
-            data['lastPrice'] = statistic_values[i]['price']
-            data['latestPrice'] = statistic_values[j]['price']
-            data['number'] = self.count
+        while i < count:
+            data['latestPrice'] = statistic_values[i]['price']
+            data['number'] = amount
+            data['init_asset'] = total_cash
             ratio = self._profit_ratio(data)
-            statistic_values[j]['growth_rate'] = ratio
-            statistic_values[j]['symbol'] = self.symbol
+            statistic_values[i]['growth_rate_monthly'] = ratio
+            statistic_values[i]['symbol'] = self.symbol
             i += 1
+
         report['detail']=statistic_values
         report['symbol'] = self.symbol
-
-        if count > 1:
-            data['lastPrice'] = self.buy_price
-            data['latestPrice'] = statistic_values[-1]['price']
-            data['number'] = self.count
-            ratio = self._profit_ratio(data)
-            print 'Latest date %s ratio:' % statistic_values[-1]['date']
-            print ratio
-            report['growth_rate'] = ratio
-        else:
-            report['info'] = 'There is only the first month statistic data found'
-            report['growth_rate'] = 0
 
         return report
 

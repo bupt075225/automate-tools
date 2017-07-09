@@ -41,10 +41,10 @@ class AlphavantageDataSource(object):
         self.symbol = symbol.upper()
         # full属性为True就查过去20年所有数据,否则只查最近100个交易日的报价
         self.full = full
-        self.url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY'
+        self.url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY"
 
     def execute(self):
-        api_key = private.configs['alphavantage_api_key']['api_key']
+        api_key = private.configs["alphavantage_api_key"]
         if not self.full:
             url = self.url + "&symbol=" + self.symbol + "&apikey=" + api_key
         else:

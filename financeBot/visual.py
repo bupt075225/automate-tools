@@ -76,13 +76,20 @@ class InvestmentVisual(object):
         ax.xaxis.set_ticks_position("bottom")
         
         # 使用日期年月来描横轴上的点
-        years = mdates.YearLocator()
         months = mdates.MonthLocator()
         years_fmt = mdates.DateFormatter("%Y-%m")
-        # x轴上的刻度最大为年,最小为月
-        ax.xaxis.set_major_locator(years)
+        # x轴上的刻度为年
+        ax.xaxis.set_major_locator(months)
         ax.xaxis.set_major_formatter(years_fmt)
-        ax.xaxis.set_minor_locator(months)
+
+        # 设置坐标轴上刻度字体大小,旋转日期,否则会挤在一起
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label.set_fontsize(10)
+            tick.label.set_rotation(40)
+            tick.label.set_ha("right")
+
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(10)
 
     def draw_figure(self):
         '''
@@ -91,53 +98,55 @@ class InvestmentVisual(object):
         assert isinstance(self.src_data, list)
 
         subplot_describle = private.configs["visual_plot"]
-        subplot_amount = len(subplot_describle)
+        subplot_type_amount = len(subplot_describle)
 
-        # 创建多个子图,子图分行列放置
-        fig, axs = plt.subplots(len(self.src_data), 
-            subplot_amount, sharex=True)
+        # 每种类型的子图占一行,每种类型包含的子图有2个各占一列
+        fig, axs = plt.subplots(subplot_type_amount, 2)
         fig.subplots_adjust(left=0.08, right=0.98, wspace=0.3)
+        # 设置子图之间的间隔
+        plt.subplots_adjust(hspace=0.5)
 
-        labels = {}
         for index,items in enumerate(self.src_data):
             i = 0
-            for i, describle in enumerate(subplot_describle):
-                ax = axs[index, i]
+            asset_type = self._get_asset_type(items[0]["symbol"])
+            if asset_type=="share":
+                row_index = 0
+            elif asset_type=="coin":
+                row_index = 1
+            else:
+                raise ValueError("Unknow asset type")
 
-                x_data = np.array([item["date"] for item in items],
+            for i, describle in enumerate(subplot_describle):
+                ax = axs[row_index, i]
+
+                date_list = [item["date"] for item in items]
+                x_tick = np.array(date_list,
                     dtype='datetime64').astype(datetime.datetime)
                 if describle=="price curve":
-                    y_data = np.array([float(item["price"]) for item in items])
+                    y_tick = np.array([float(item["price"]) for item in items])
                 elif describle=="growth rate curve":
-                    y_data = np.array([item["growth_rate_monthly"] for item in items])
+                    y_tick = np.array([item["growth_rate_monthly"] for item in items])
                 else:
                     raise ValueError("Unknow plot describle")
 
-                ax.plot(x_data, y_data)
+                # 描点画线
+                ax.plot(x_tick, y_tick)
 
                 self._set_subplot(ax)
-                asset_type = self._get_asset_type(items[0]["symbol"])
+                # 设置X轴上显示的日期间隔
+                if len(date_list) > 6:
+                    ax.xaxis.set_ticks(x_tick[::2])
 
                 # 设置标题
                 ax.set_title("%s %s" % (asset_type, describle))
 
-                datemin = datetime.date(x_data.min().year, 1, 1)
-                datemax = datetime.date(x_data.max().year+1, 1, 1)
-                ax.set_xlim(datemin, datemax)
+                x_tick_min = datetime.date(x_tick.min().year,x_tick.min().month,1)
+                x_tick_max = datetime.date(x_tick.max().year,x_tick.max().month+1,1)
+                ax.set_xlim(x_tick_min, x_tick_max)
 
-                labels[items[0]["symbol"]] = [x_data[-1],y_data[-1]]
+                ax.text(x_tick[-1],y_tick[-1],items[0]["symbol"],fontsize=8)
 
                 i += 1
-
-        for k,v in labels.iteritems():
-            print v
-            print k
-            plt.text(v[0],v[1],k,fontsize=8)
-
-        fig.autofmt_xdate()
-        # 设置子图之间的间隔
-        plt.subplots_adjust(hspace=0.2)
-        #plt.subplots_adjust(hspace=.0)
 
         filename = 'trend' + datetime.date.today().strftime('%Y%m%d') + '.png'
         plt.savefig(filename)

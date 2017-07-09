@@ -107,10 +107,8 @@ class StockTask(task):
                 ret['detail'][-1]['growth_rate_monthly'])
             data_detail.append(ret["detail"])
 
-        print ">>>>>>>>>>>>panic"
         v = InvestmentVisual(data_detail)
         tables = '<p>%s</p>' % (v.draw_table())
-        print ">>>>>>now to draw"
         image_name = v.draw_figure()
         cur_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -119,6 +117,7 @@ class StockTask(task):
         email_content['subject'] = '投资报告'
         email_content['content'] = abstract.encode('utf-8') + tables.encode('utf-8')
         email_content['image_name'] = "%s/%s" % (cur_dir,image_name) 
+        print email_content
         mail = email()
         msg = mail.writeEmail(**email_content)
         mail.sendEmail(email_content['toAddr'], msg)
@@ -139,7 +138,7 @@ class RestartWebSiteTask(task):
 
 if __name__=="__main__":
     restart_web_task = RestartWebSiteTask(hour="2:30")
-    send_report_task = StockTask(datetime="5 7:19")
+    send_report_task = StockTask(datetime="28 12:10")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},
         {'delay':send_report_task.timeDelta, 'action':send_report_task.run_stock_task, 'args':tuple()},

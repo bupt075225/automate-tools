@@ -7,16 +7,24 @@
 
 configs = {
     # 第三方客户端发送邮件的授权码
-    'mailAuth':'xxxxxx',    
-    'stocks':[
+    "mailAuth":"xxxxxx",    
+    "notify_email":["nonprivatemail@163.com",]
+    "stocks":[
         {
-            'symbol':'CTRP',
-            'buyPrice':41.28,
-            'count':17,
-            'date':'2016-12-15',
-            'email':'nonprivatemail@163.com'
+            "symbol":"BIDU",
+            "buy_records":[
+                {
+                    "buyPrice":60,
+                    "count":100,
+                    "date":"2012-12-15"
+                },
+            ],
         },
     ]
+    "shares":["BIDU",],
+    "visual_plot":["price curve", "growth rate curve"],
+    "db_pwd":"xxxxx",
+    "alphavantage_api_key":"xxxxxxxx",
     'intrinio_api_auth':{
         'username':'xxxx',
         'password':'xxxx'

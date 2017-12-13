@@ -17,6 +17,7 @@ sys.path.append('/home/data/git/automate-tools/financeBot')
 from investment_report import StockReport
 from sendEmail import email
 from visual import InvestmentVisual
+from monitor_asset_price import check_asset_quotes
 import private
 
 
@@ -25,13 +26,14 @@ scheduler = sched.scheduler(time.time, time.sleep)
 class timer(object):
     '''
     通过python内置模块sched实现的定时器,定时器触发
-    后,由任务执行函数重新调试下次继续执行的任务
+    后,由任务执行函数重新调度下次继续执行的任务
     '''
     def __init__(self, tasks):
         self.tasks = tasks
 
     def trigger(self):
         for task in self.tasks:
+            print task
             scheduler.enter(task['delay'], 0, task['action'], task['args'])
         scheduler.run()
 
@@ -135,14 +137,35 @@ class RestartWebSiteTask(task):
         self.reschedule(self.run_restart_site_task, self.arguments, delay_time)
         subprocess.Popen("supervisorctl restart xilingxue", shell=True)
 
+class MonitorAssetQuotesTask(task):
+    '''
+    每天监视资产价格波动,超过阀值发送短信提示
+    '''
+    def __init__(self, datetime=None, hour="2:30", args=()):
+        super(MonitorAssetQuotesTask, self).__init__(datetime, hour, args)
+
+    def get_asset_quotes(self, *args):
+        print "Debug here>>>>>>>>>>"
+        print args
+        next_args = []
+        for item in args:
+            new_base = check_asset_quotes(item["name"], item["base"], item["threshold"])
+            self.arguments = new_base
+            next_args.append(new_base)
+
+        print next_args
+        delay_time = self.calculate_time_delta()
+        self.reschedule(self.get_asset_quotes, next_args, delay_time)
 
 if __name__=="__main__":
     restart_web_task = RestartWebSiteTask(hour="2:30")
-    send_report_task = StockTask(datetime="28 12:10")
+    send_report_task = StockTask(datetime="02 12:15")
+    monitor_asset_task = MonitorAssetQuotesTask(hour="22:35")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},
         {'delay':send_report_task.timeDelta, 'action':send_report_task.run_stock_task, 'args':tuple()},
+        {'delay':monitor_asset_task.timeDelta, 'action':monitor_asset_task.get_asset_quotes, 'args':private.configs["asset_threshold"]},
     ]
-    testTimer = timer(tasks)
-    testTimer.trigger()
+    test_timer = timer(tasks)
+    test_timer.trigger()
 

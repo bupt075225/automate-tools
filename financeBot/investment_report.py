@@ -3,6 +3,7 @@
 from __future__ import division
 import sys
 import time
+import math
 import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
@@ -18,14 +19,15 @@ class StockReport(object):
         self.symbol = symbol
         self.buy_records = buy_records
 
-    def _profit_ratio(self, data):
+    def _cal_compund_growth_rate(self, data):
         '''
-        计算每月收益率
+        按照复利计算公式计算投资回报率
         '''
-        init_asset = data['init_asset']
-        latest_asset = round(float(data['latestPrice']) * data['number'],4)
-
-        ratio = round((latest_asset - init_asset) / init_asset, 4)
+        temp = data['latest_asset']/data['init_asset']
+        if 0 != data['index']:
+            ratio = round(math.pow(temp, 1.0/data['index']) - 1, 4)
+        else:
+            ratio = 0
         return ratio
 
     def _get_stock_data(self, symbol, first_buy_date):
@@ -34,7 +36,7 @@ class StockReport(object):
         if symbol=="BTC":
             coin = CryptoCurrency()
             return coin.get_historical_btc(first_buy_date, cur_date)
-        elif symbol=="CTRP":
+        elif symbol=="CTRP" or symbol=="FB":
             share = Share(symbol)
             return share.get_historical(first_buy_date, cur_date)
         else:
@@ -93,39 +95,54 @@ class StockReport(object):
 
         return total_cash, amount
 
+    def ratio_by_year(self):
+        '''
+        按年计算复利,年复合增长率
+        '''
+        report = {}
+        statistic_values = self._get_statistic(self.buy_records[0]["date"])
+        print statistic_values
+        start_date = time.strptime(statistic[0]["date"], "%Y-%m-%d")
+        end_date = time.strptime(statistic[-1]["date"], "%Y-%m-%d")
+        years = end_date.tm_year - start_date.tm_year
+        if years < 1:
+            data["index"] = 1
+        else:
+            data["index"] = years
+        data = {}
+        data["init_asset"], amount = self._get_init_asset(self.buy_records)
+        data["latest_asset"] = float(statistic_values[-1]["price"]) * amount
+        ratio = self._cal_compund_growth_rate(data)
+
     def ratio_by_month(self):
+        '''
+        按月计算复利
+        '''
         report = {}
         statistic_values = self._get_statistic(self.buy_records[0]["date"])
         count = len(statistic_values)
 
-        total_cash, amount = self._get_init_asset(self.buy_records)
-        i = 0
         data = {}
+        data['init_asset'], amount = self._get_init_asset(self.buy_records)
+        i = 0
         while i < count:
-            data['latestPrice'] = statistic_values[i]['price']
-            data['number'] = amount
-            data['init_asset'] = total_cash
-            ratio = self._profit_ratio(data)
+            data['latest_asset'] = float(statistic_values[i]['price']) * amount
+            data['index'] = i
+            ratio = self._cal_compund_growth_rate(data)
             statistic_values[i]['growth_rate_monthly'] = ratio
             statistic_values[i]['symbol'] = self.symbol
             i += 1
 
         report['detail']=statistic_values
         report['symbol'] = self.symbol
+        print report
 
         return report
 
 
 if __name__=="__main__":
-    if len(sys.argv) != 5:
-        print "usage: python %s symbol date price count" % sys.argv[0]
-        print "       symbol: 股票代码"
-        print "       date  : 买入日期,示例：2016-12-15"
-        print "       price : 买入价格"
-        print "       count : 买入数量"
-        print "示例:python %s CTRP 2016-12-15 45.23 10" % sys.argv[0]
-        #sys,exit(1)
-
-    report = StockReport('CTRP', '2016-12-15', 41.28, 17)
-    ret = report.ratio_by_month()
-    print ret
+    import private
+    for stock in private.configs['stocks']:
+        print stock['symbol']
+        report = StockReport(stock['symbol'], stock['buy_records']) 
+        ret = report.ratio_by_month()

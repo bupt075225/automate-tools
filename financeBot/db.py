@@ -9,6 +9,8 @@ from orm import DBSession
 from orm import HistoricalStockPrices
 from orm import HistoricalBtcPrices
 
+import sys
+sys.path.append("/home/data/git/data_source")
 from data_source import AlphavantageDataSource
 from data_source import CoindeskDataSource
 
@@ -22,8 +24,8 @@ class Share(object):
         '''
         从数据源获取历史股价
         '''
-        q = AlphavantageDataSource(symbol=self.symbol, full=full)
-        raw_data = q.execute()
+        src = AlphavantageDataSource()
+        raw_data = src.get_historical_stock(self.symbol, full=full)
         return raw_data
 
     def _cleanse_raw_data(self, raw_data):

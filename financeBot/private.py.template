@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
 '''
@@ -8,25 +7,45 @@
 configs = {
     # 第三方客户端发送邮件的授权码
     "mailAuth":"xxxxxx",    
-    "notify_email":["nonprivatemail@163.com",]
+    "notify_email":["user@163.com",],
+
     "stocks":[
         {
-            "symbol":"BIDU",
+            "symbol":"ABC",
             "buy_records":[
                 {
-                    "buyPrice":60,
-                    "count":100,
-                    "date":"2012-12-15"
+                    "buy_price":100,
+                    "amount":100,
+                    "date":"2016-12-20"
+                },
+                {
+                    "buy_price":200,
+                    "amount":200,
+                    "date":"2017-08-22"
                 },
             ],
         },
-    ]
-    "shares":["BIDU",],
+    ],
+
+    # 资产价格波动告警阀值
+    "asset_threshold":[
+        {"name":"BTC", "base":13913, "threshold":10},
+    ],
+
+    "shares":["ABC",],
+    "coins":["BTC",],
     "visual_plot":["price curve", "growth rate curve"],
-    "db_pwd":"xxxxx",
-    "alphavantage_api_key":"xxxxxxxx",
-    'intrinio_api_auth':{
-        'username':'xxxx',
-        'password':'xxxx'
-    }
+    "db_pwd":"fjsdkdfjskd",
+
+    # 第三方数据源的认证信息
+    "alphavantage_api_key":"NICTTE9WI04SM6BC",
+
+    # 发送短信通知的配置信息
+    "sms": {
+        "appid":"11111111", 
+        "appkey":"fskfdkfjskf2389jskfjsd",
+        "sms_sign":"XXX",
+        "templ_id":60257,
+        "phone_numbers":["15928092651",],
+    },
 }

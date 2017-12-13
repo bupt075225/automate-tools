@@ -4,6 +4,9 @@ import httplib
 import json
 import random
 import time
+import datetime
+from dateutil.relativedelta import relativedelta
+from dateutil.rrule import rrule, MONTHLY
 import hashlib
 
 class SmsSenderUtil(object):
@@ -53,4 +56,12 @@ class SmsSenderUtil(object):
                 con.close()
         return result
 
-
+def get_date_monthly(start, end=time.strftime("%Y-%m-%d" ,time.localtime())):
+    start_date = time.strptime(start, "%Y-%m-%d")
+    end_date = time.strptime(end, "%Y-%m-%d")
+    start_date = datetime.date(start_date.tm_year,start_date.tm_mon,start_date.tm_mday)
+    end_date = datetime.date(end_date.tm_year,end_date.tm_mon,end_date.tm_mday)
+    date_list = rrule(freq=MONTHLY, dtstart=start_date, until=end_date)
+    date_list = [time.strftime("%Y-%m-%d", date.timetuple()) for date in date_list]
+    return date_list
+    

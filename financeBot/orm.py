@@ -31,19 +31,20 @@ class HistoricalStockPrices(Base):
             self.symbol, self.date, self.close)
 
 
-class HistoricalBtcPrices(Base):
+class DigitalCurrencyHistoricalPrices(Base):
     # 表名
-    __tablename__ = "historical_btc_prices"
+    __tablename__ = "digital_currency_historical_prices"
     __table_args__ = {"mysql_charset":"utf8","mysql_engine":"InnoDB"}
 
     # 表结构
     id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(16), nullable=False)
     date = Column(Date, nullable=False)
     close = Column(Float, nullable=False)
 
     def __repr__(self):
-        return "<BTC price(date='%s',close='%s')>" % (
-            self.date, self.close)
+        return "<BTC price(symbol='%s',date='%s',close='%s')>" % (
+            self.symbol, self.date, self.close)
 
 
 # 初始化数据库连接

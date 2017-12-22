@@ -33,9 +33,9 @@ class StockReport(object):
     def _get_stock_data(self, symbol, first_buy_date):
         #从本地数据库获取股票历史价格
         cur_date = time.strftime("%Y-%m-%d" ,time.localtime())
-        if symbol=="BTC":
-            coin = CryptoCurrency()
-            return coin.get_historical_btc(first_buy_date, cur_date)
+        if symbol=="BTC" or symbol=="BCH":
+            coin = CryptoCurrency(symbol)
+            return coin.get_historical_price(first_buy_date, cur_date)
         elif symbol=="CTRP" or symbol=="FB":
             share = Share(symbol)
             return share.get_historical(first_buy_date, cur_date)
@@ -99,20 +99,19 @@ class StockReport(object):
         '''
         按年计算复利,年复合增长率
         '''
-        report = {}
+        data = {}
         statistic_values = self._get_statistic(self.buy_records[0]["date"])
-        print statistic_values
-        start_date = time.strptime(statistic[0]["date"], "%Y-%m-%d")
-        end_date = time.strptime(statistic[-1]["date"], "%Y-%m-%d")
+        start_date = time.strptime(statistic_values[0]["date"], "%Y-%m-%d")
+        end_date = time.strptime(statistic_values[-1]["date"], "%Y-%m-%d")
         years = end_date.tm_year - start_date.tm_year
         if years < 1:
             data["index"] = 1
         else:
             data["index"] = years
-        data = {}
         data["init_asset"], amount = self._get_init_asset(self.buy_records)
         data["latest_asset"] = float(statistic_values[-1]["price"]) * amount
         ratio = self._cal_compund_growth_rate(data)
+        return ratio
 
     def ratio_by_month(self):
         '''

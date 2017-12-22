@@ -6,6 +6,7 @@ import sys
 sys.path.append("/home/data/git/data_source")
 from data_source import CoindeskDataSource
 from data_source import IEXDataSource
+from data_source import OKCoinDataSource
 from send_sms import SmsSender
 from private import configs
 
@@ -32,6 +33,15 @@ class AssetPriceMonitor(object):
             return 0
         return cur_price
 
+    def _get_cur_bch_price(self):
+        data_source = OKCoinDataSource()
+        try:
+            cur_price = data_source.get_realtime_bch()
+        except:
+            print "Get digital currency price failed"
+            return 0
+        return cur_price
+
     def _get_cur_stock_price(self):
         data_source = IEXDataSource(self.asset_name)
         try:
@@ -48,18 +58,19 @@ class AssetPriceMonitor(object):
         quotes = {}
         if self.asset_name == "BTC":
             cur_price = self._get_cur_btc_price()
+        elif self.asset_name == "BCH":
+            cur_price = self._get_cur_bch_price()
         else:
             cur_price = self._get_cur_stock_price()
 
         if 0 == cur_price:
             return quotes
 
-        delta = abs(cur_price - self.base_price)
+        delta = abs(float(cur_price) - float(self.base_price))
         percent = round(delta / self.base_price * 100, 2)
         quotes["asset_name"] = self.asset_name
         quotes["cur_price"] = cur_price
         quotes["threshold"] = self.threshold
-        print percent
         if cur_price < self.base_price and percent >= self.threshold:
             quotes["state"] = "下跌"
         elif cur_price > self.base_price and percent >= self.threshold:

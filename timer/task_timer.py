@@ -98,6 +98,8 @@ class StockTask(task):
         for stock in private.configs['stocks']:
             report = StockReport(stock['symbol'], stock['buy_records']) 
             ret = report.ratio_by_month()
+            compound_rate_year = report.ratio_by_year()
+            ret['compound_rate_year'] = compound_rate_year
             reports.append(ret)
 
         abstract = ""
@@ -105,8 +107,8 @@ class StockTask(task):
         # 报告转为邮件内容
         for ret in reports:
             assert isinstance(ret['detail'], list)
-            abstract += '<p>%s total growth rate: %s</p>' % (ret['symbol'], 
-                ret['detail'][-1]['growth_rate_monthly'])
+            abstract += '<p>%s Compound growth rate: %s</p>' % (ret['symbol'], 
+                ret['compound_rate_year'])
             data_detail.append(ret["detail"])
 
         v = InvestmentVisual(data_detail)
@@ -141,12 +143,10 @@ class MonitorAssetQuotesTask(task):
     '''
     每天监视资产价格波动,超过阀值发送短信提示
     '''
-    def __init__(self, datetime=None, hour="2:30", args=()):
+    def __init__(self, datetime=None, hour="22:35", args=()):
         super(MonitorAssetQuotesTask, self).__init__(datetime, hour, args)
 
     def get_asset_quotes(self, *args):
-        print "Debug here>>>>>>>>>>"
-        print args
         next_args = []
         for item in args:
             new_base = check_asset_quotes(item["name"], item["base"], item["threshold"])
@@ -159,7 +159,7 @@ class MonitorAssetQuotesTask(task):
 
 if __name__=="__main__":
     restart_web_task = RestartWebSiteTask(hour="2:30")
-    send_report_task = StockTask(datetime="02 12:15")
+    send_report_task = StockTask(datetime="03 12:15")
     monitor_asset_task = MonitorAssetQuotesTask(hour="22:35")
     tasks = [
         {'delay':restart_web_task.timeDelta, 'action':restart_web_task.run_restart_site_task, 'args':tuple()},

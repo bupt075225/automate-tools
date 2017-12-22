@@ -7,7 +7,7 @@ from sqlalchemy.sql import exists
 
 from orm import DBSession
 from orm import HistoricalStockPrices
-from orm import HistoricalBtcPrices
+from orm import DigitalCurrencyHistoricalPrices
 
 import sys
 sys.path.append("/home/data/git/data_source")
@@ -102,19 +102,34 @@ class Share(object):
         return output
 
 class CryptoCurrency(object):
-    def _get_raw_historical_btc(self, start, end):
-        # 从数据源获取历史BTC价格
-        source = CoindeskDataSource()
-        btc_data = source.get_historical_btc(start,end)
-        return btc_data
+    def __init__(self, symbol):
+        self.symbol = symbol
 
-    def _cleanse_raw_btc(self, raw):
+    def _get_raw_historical_price(self, start="", end=""):
+        if self.symbol=="BTC":
+            # 从数据源获取历史BTC价格
+            src = CoindeskDataSource()
+            btc_data = src.get_historical_btc(start,end)
+            return btc_data
+        elif self.symbol=="BCH":
+            # 从数据源获取历史BCH价格
+            src = AlphavantageDataSource()
+            return src.get_historical_digital_currency("BCH")
+        else:
+            raise ValueError("Unknow digital currency symbol")
+
+    def _cleanse_raw_data(self, raw):
         assert isinstance(raw, dict)
 
         output = []
         for k,v in raw.iteritems():
+            if "BCH"==self.symbol:
+                close_price = round(float(v["4a. close (USD)"]), 4)
+            elif "BTC"==self.symbol:
+                close_price = v
             date = datetime.datetime.strptime(k, "%Y-%m-%d").date()
-            item = HistoricalBtcPrices(date=date,close=v)
+            item = DigitalCurrencyHistoricalPrices(symbol=self.symbol,
+                   date=date,close=close_price)
             output.append(item)
 
         return output
@@ -123,7 +138,8 @@ class CryptoCurrency(object):
         session = DBSession()
         for price in data:
             exist = session.query(
-                exists().where(HistoricalBtcPrices.date==price.date)).scalar()
+                exists().where(DigitalCurrencyHistoricalPrices.date==price.date)
+                .where(DigitalCurrencyHistoricalPrices.symbol==price.symbol)).scalar()
 
             # 增量更新
             if not exist:
@@ -132,15 +148,16 @@ class CryptoCurrency(object):
         session.commit()
         session.close()
 
-    def get_historical_btc(self, start_date, end_date):
+    def get_historical_price(self, start_date="", end_date=""):
         # 首先更新本地数据库存
-        raw_data = self._get_raw_historical_btc(start_date,end_date)
-        data = self._cleanse_raw_btc(raw_data)
+        raw_data = self._get_raw_historical_price(start_date,end_date)
+        data = self._cleanse_raw_data(raw_data)
         self._update_db(data)
 
         session = DBSession()
-        prices = session.query(HistoricalBtcPrices).filter(
-            HistoricalBtcPrices.date.between(start_date,end_date)).all()
+        prices = session.query(DigitalCurrencyHistoricalPrices).filter(
+            DigitalCurrencyHistoricalPrices.symbol==self.symbol).filter(
+            DigitalCurrencyHistoricalPrices.date.between(start_date,end_date)).all()
         session.close()
 
         output = []
